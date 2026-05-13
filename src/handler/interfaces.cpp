@@ -1540,7 +1540,11 @@ std::string subconverter(RESPONSE_CALLBACK_ARGS) {
   default:
     writeLog(0, "Generate target: Unspecified", LOG_LEVEL_INFO);
     *status_code = 500;
-    return "Unrecognized target";
+    return "Internal error: target passed validation but no generator handled "
+           "it.\n"
+           "内部错误：target 已通过校验，但没有对应的生成器处理它。\n"
+           "Please report this request to the service maintainer.\n"
+           "请将该请求反馈给服务维护者。";
   }
   writeLog(0, "Generate completed.", LOG_LEVEL_INFO);
   if (!argFilename.empty())
