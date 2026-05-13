@@ -205,7 +205,14 @@ static void on_request(evhttp_request *req, void *args)
 
     if (internal_flag != nullptr)
     {
-        evhttp_send_error(req, 500, "Loop request detected!");
+        auto buffer = evhttp_request_get_output_buffer(req);
+        std::string return_data = "Internal error: loop request detected.\n"
+                                  "内部错误：检测到循环请求。\n"
+                                  "Please check subscription URLs and proxy settings to avoid routing the service back to itself.\n"
+                                  "请检查订阅链接和代理设置，避免服务请求回到自身。";
+        evbuffer_add(buffer, return_data.data(), return_data.size());
+        evhttp_send_reply(req, 500, nullptr, buffer);
+        buffer_cleanup(buffer);
         return;
     }
 
