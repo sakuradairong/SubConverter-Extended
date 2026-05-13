@@ -629,7 +629,14 @@ std::string subconverter(RESPONSE_CALLBACK_ARGS) {
     break;
   default:
     *status_code = 400;
-    return "Invalid target!";
+    return "Invalid request: unsupported target value.\n"
+           "无效请求：不支持的 target 参数值。\n"
+           "Supported targets: clash, clashr, surge, quan, quanx, loon, "
+           "surfboard, mellow, singbox, ss, ssd, ssr, sssub, v2ray, trojan, "
+           "mixed.\n"
+           "支持的 target：clash、clashr、surge、quan、quanx、loon、"
+           "surfboard、mellow、singbox、ss、ssd、ssr、sssub、v2ray、trojan、"
+           "mixed。";
   }
   // check if we need to read configuration
   if (global.reloadConfOnRequest &&
