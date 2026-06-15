@@ -76,6 +76,7 @@ ADD_EXECUTABLE(${BUILD_TARGET_NAME}
     src/handler/dashboard_page.cpp
     src/handler/inspect_page.cpp
     src/handler/interfaces.cpp
+    src/handler/webapp_page.cpp
     src/handler/multithread.cpp
     src/handler/statistics.cpp
     src/handler/upload.cpp

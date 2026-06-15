@@ -15,6 +15,7 @@
 #include "handler/statistics.h"
 #include "handler/version_page.h"
 #include "handler/webget.h"
+#include "handler/webapp_page.h"
 #include "script/cron.h"
 #include "server/socket.h"
 #include "server/webserver.h"
@@ -184,13 +185,8 @@ int main(int argc, char *argv[]) {
   if (global.generatorMode)
     return simpleGenerator();
 
-  /*
-  webServer.append_response("GET", "/", "text/plain", [](RESPONSE_CALLBACK_ARGS)
-  -> std::string
-  {
-      return "SubConverter-Extended " VERSION " backend\n";
-  });
-  */
+  webServer.append_response("GET", "/", "text/html; charset=utf-8",
+                            webapp_page::page);
 
   webServer.append_response("GET", "/version/favicon-dark.svg",
                             "image/svg+xml; charset=utf-8",
