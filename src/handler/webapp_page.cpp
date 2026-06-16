@@ -412,6 +412,14 @@ std::string page(Request &, Response &response) {
                 </div>
             </div>
             <div class="topbar-actions">
+                <a class="nav-link" href="/version">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><circle cx="12" cy="8" r="1"></circle></svg>
+                    <span data-lang="en">Version</span><span data-lang="zh">版本</span>
+                </a>
+                <a class="nav-link" href="/inspect">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.35-4.35"></path></svg>
+                    <span data-lang="en">Inspect</span><span data-lang="zh">诊断</span>
+                </a>
                 )html" +
             dashboard_link +
             R"html(
@@ -421,11 +429,20 @@ std::string page(Request &, Response &response) {
 
         <!-- Quick Actions -->
         <div class="quick-actions">
-            <a class="quick-btn" href="/clash"><svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>Clash</a>
-            <a class="quick-btn" href="/surge"><svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>Surge</a>
-            <a class="quick-btn" href="/singbox"><svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>Sing-box</a>
-            <a class="quick-btn" href="/quanx"><svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>QuanX</a>
-            <a class="quick-btn" href="/v2ray"><svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>V2Ray</a>
+            <a class="quick-btn" href="/clash" title="Clash / Mihomo"><svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>Clash</a>
+            <a class="quick-btn" href="/clashr" title="ClashR"><svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>ClashR</a>
+            <a class="quick-btn" href="/surge" title="Surge"><svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>Surge</a>
+            <a class="quick-btn" href="/quanx" title="Quantumult X"><svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>QuanX</a>
+            <a class="quick-btn" href="/quan" title="Quantumult"><svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>Quan</a>
+            <a class="quick-btn" href="/loon" title="Loon"><svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>Loon</a>
+            <a class="quick-btn" href="/surfboard" title="Surfboard"><svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>Surfboard</a>
+            <a class="quick-btn" href="/mellow" title="Mellow"><svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>Mellow</a>
+            <a class="quick-btn" href="/singbox" title="Sing-box"><svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>Sing-box</a>
+            <a class="quick-btn" href="/ss" title="Shadowsocks"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>SS</a>
+            <a class="quick-btn" href="/ssr" title="ShadowsocksR"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>SSR</a>
+            <a class="quick-btn" href="/v2ray" title="V2Ray"><svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>V2Ray</a>
+            <a class="quick-btn" href="/trojan" title="Trojan"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Trojan</a>
+            <a class="quick-btn" href="/mixed" title="Mixed"><svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>Mixed</a>
         </div>
 
         <!-- Main Panel -->

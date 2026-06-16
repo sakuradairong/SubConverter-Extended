@@ -270,14 +270,11 @@ std::string page(Request &request, Response &response) {
 
         body {
             font-family: 'Outfit', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", sans-serif;
+            margin: 0;
             min-height: 100vh;
             min-height: 100svh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
             background: var(--bg-gradient);
             background-attachment: fixed;
-            padding: 24px;
             color: var(--text-primary);
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
@@ -308,51 +305,80 @@ std::string page(Request &request, Response &response) {
             opacity: 0.82;
         }
 
-        .lang-toggle {
-            position: fixed;
-            top: calc(18px + env(safe-area-inset-top, 0px));
-            right: calc(18px + env(safe-area-inset-right, 0px));
-            z-index: 10;
-            display: inline-flex;
+        .shell {
+            position: relative;
+            z-index: 1;
+            width: min(1180px, calc(100% - 32px));
+            margin: 0 auto;
+            padding: 28px 0 42px;
+        }
+        .topbar {
+            display: flex;
             align-items: center;
-            gap: 8px;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .brand-row {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            min-width: 0;
+        }
+        .brand-row img {
+            width: 48px;
+            height: 48px;
+            flex: 0 0 auto;
+            filter: drop-shadow(0 12px 24px rgba(2, 132, 199, 0.16));
+        }
+        .brand-row h1 {
+            margin: 0;
+            font-size: 1.8rem;
+            line-height: 1.08;
+            letter-spacing: 0;
+            overflow-wrap: anywhere;
+            background: none;
+            -webkit-background-clip: unset;
+            background-clip: unset;
+            -webkit-text-fill-color: unset;
+        }
+        .brand-row .top-subtitle {
+            margin-top: 5px;
+            color: var(--text-secondary);
+            font-size: 0.94rem;
+            font-weight: 600;
+        }
+        .actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+        .lang-btn {
             border: 1px solid var(--control-border);
             border-radius: 999px;
             background: var(--control-bg);
-            backdrop-filter: blur(18px);
-            -webkit-backdrop-filter: blur(18px);
-            box-shadow: var(--control-shadow);
             color: var(--text-primary);
             cursor: pointer;
             font: inherit;
-            font-size: 0.86rem;
+            font-size: 0.88rem;
             font-weight: 700;
             line-height: 1;
             min-height: 40px;
             min-width: 76px;
             padding: 9px 13px;
-            transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
         }
-
-        .lang-toggle:hover {
+        .lang-btn:hover {
             background: var(--control-hover);
             transform: translateY(-1px);
         }
-
-        .lang-toggle:focus-visible {
+        .lang-btn:focus-visible {
             outline: 3px solid rgba(99, 179, 237, 0.35);
             outline-offset: 2px;
-        }
-
-        .lang-toggle svg {
-            width: 17px;
-            height: 17px;
-            flex: 0 0 auto;
-        }
-
-        .lang-toggle-text {
-            min-width: 20px;
-            text-align: center;
         }
 
         .page-links {
@@ -740,12 +766,12 @@ std::string page(Request &request, Response &response) {
             .container::after {
                 border-radius: 26px;
             }
-            .lang-toggle {
-                top: calc(14px + env(safe-area-inset-top, 0px));
-                right: calc(14px + env(safe-area-inset-right, 0px));
-                min-height: 38px;
-                min-width: 70px;
+            .shell {
+                padding: 16px 0 24px;
+                width: min(100% - 20px, 1180px);
             }
+            .topbar { flex-direction: column; align-items: flex-start; }
+            .brand-row h1 { font-size: 1.4rem; }
             header { margin-bottom: 24px; }
             h1 {
                 font-size: 2em;
@@ -796,17 +822,22 @@ std::string page(Request &request, Response &response) {
     </style>
 </head>
 <body>
-    <button type="button" class="lang-toggle" id="lang-toggle">
-        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10"></circle>
-            <path d="M2 12h20"></path>
-            <path d="M12 2a15.3 15.3 0 0 1 0 20"></path>
-            <path d="M12 2a15.3 15.3 0 0 0 0 20"></path>
-        </svg>
-        <span class="lang-toggle-text">中</span>
-    </button>
-    <div class="container">
-        <header>
+    <main class="shell">
+        <div class="topbar">
+            <div class="brand-row">
+                <picture>
+                    <source media="(prefers-color-scheme: dark)" srcset="/version/favicon-dark.svg">
+                    <img src="/version/favicon-light.svg" alt="SubConverter-Extended" width="48" height="48" decoding="async">
+                </picture>
+                <div>
+                    <h1>SubConverter-Extended</h1>
+                    <div class="top-subtitle">
+                        <span data-lang="en">A Modern Evolution of Subconverter</span>
+                        <span data-lang="zh">Subconverter 的现代化演进版本</span>
+                    </div>
+                </div>
+            </div>
+            <div class="actions">
             <picture class="brand-mark">
                 <source media="(prefers-color-scheme: dark)" srcset="/version/favicon-dark.svg">
                 <img src="/version/favicon-light.svg" alt="SubConverter-Extended icon" width="96" height="96" decoding="async">
@@ -833,8 +864,13 @@ std::string page(Request &request, Response &response) {
                     <span data-lang="zh">诊断台</span>
                 </a>)html" +
          dashboard_link + R"html(
-            </nav>
-        </header>
+                <button type="button" class="lang-btn" id="lang-toggle" aria-label="Switch language">
+                    <span class="lang-toggle-text">中</span>
+                </button>
+            </div>
+        </div>
+        <div class="container">
+            <header>
 
         <div class="info-grid">
             <div class="info-card">
@@ -913,6 +949,7 @@ std::string page(Request &request, Response &response) {
             <span data-lang="zh">源代码：<a href="https://github.com/Aethersailor/SubConverter-Extended" target="_blank" rel="noopener noreferrer">GitHub</a> • 许可证：<a href="https://www.gnu.org/licenses/gpl-3.0.html" target="_blank" rel="noopener noreferrer">GPL-3.0</a></span>
         </div>
     </div>
+    </main>
     <script>
         (function () {
             var toggle = document.getElementById("lang-toggle");
