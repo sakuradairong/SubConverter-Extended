@@ -23,9 +23,18 @@ std::string page(Request &, Response &response) {
     <title>SubConverter-Extended Dashboard</title>
     <script>
         (function () {
-            var saved = localStorage.getItem("sce-dashboard-lang");
-            if (saved) {
-                document.documentElement.lang = saved;
+            var saved = null;
+            try {
+                saved = localStorage.getItem("sce-ui-lang")
+                    || localStorage.getItem("sce-dashboard-lang")
+                    || localStorage.getItem("sce-webapp-lang");
+            } catch (e) {}
+            if (saved === "zh" || saved === "zh-CN") {
+                document.documentElement.lang = "zh-CN";
+                return;
+            }
+            if (saved === "en") {
+                document.documentElement.lang = "en";
                 return;
             }
             var languages = navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language || ""];
@@ -71,6 +80,9 @@ std::string page(Request &, Response &response) {
             --rank-rule: linear-gradient(90deg, #93c5fd 0%, #2563eb 62%, #1e3a8a 100%);
             --danger: #dc2626;
             --warn: #b45309;
+            --focus-ring: #1d4ed8;
+            --accent-soft: rgba(37, 99, 235, 0.1);
+            --status-border: rgba(37, 99, 235, 0.22);
         }
 
         @media (prefers-color-scheme: dark) {
@@ -106,6 +118,9 @@ std::string page(Request &, Response &response) {
                 --rank-rule: linear-gradient(90deg, #7dd3fc 0%, #38bdf8 58%, #2563eb 100%);
                 --danger: #f87171;
                 --warn: #fbbf24;
+                --focus-ring: #38bdf8;
+                --accent-soft: rgba(56, 189, 248, 0.12);
+                --status-border: rgba(56, 189, 248, 0.28);
             }
         }
 
@@ -113,10 +128,14 @@ std::string page(Request &, Response &response) {
         html:not([lang^="zh"]) [data-lang="zh"] { display: none; }
 
         * { box-sizing: border-box; }
+        html[lang^="zh"] body {
+            font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", "Noto Sans CJK SC", system-ui, sans-serif;
+        }
+        html[lang^="zh"] h1 { line-height: 1.35; }
         body {
             margin: 0;
             min-height: 100vh;
-            font-family: 'Outfit', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", sans-serif;
+            font-family: 'Outfit', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
             color: var(--text-primary);
             background: var(--bg-gradient);
             background-attachment: fixed;
@@ -154,12 +173,16 @@ std::string page(Request &, Response &response) {
             gap: 16px;
             margin-bottom: 24px;
         }
-        .brand {
+        .brand,
+        .brand-link {
             display: flex;
             align-items: center;
             gap: 14px;
             min-width: 0;
+            color: inherit;
+            text-decoration: none;
         }
+        .brand-link:hover { color: inherit; }
         .brand img {
             width: 48px;
             height: 48px;
@@ -209,8 +232,12 @@ std::string page(Request &, Response &response) {
             background: var(--control-hover);
             transform: translateY(-1px);
         }
+        .page-link[aria-current="page"] {
+            background: var(--accent-soft);
+            border-color: var(--status-border);
+        }
         .page-link:focus-visible {
-            outline: 3px solid rgba(99, 179, 237, 0.35);
+            outline: 2px solid var(--focus-ring);
             outline-offset: 2px;
         }
         .page-link svg {
@@ -277,7 +304,7 @@ std::string page(Request &, Response &response) {
             transition: background 0.2s ease, transform 0.2s ease;
         }
         button:hover { background: var(--control-hover); transform: translateY(-1px); }
-        button:focus-visible { outline: 3px solid rgba(99, 179, 237, 0.35); outline-offset: 2px; }
+        button:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
 
         .panel {
             background: var(--surface);
@@ -765,10 +792,10 @@ std::string page(Request &, Response &response) {
 <body>
     <main class="shell">
         <div class="topbar">
-            <div class="brand">
+            <a class="brand brand-link" href="/">
                 <picture>
                     <source media="(prefers-color-scheme: dark)" srcset="/version/favicon-dark.svg">
-                    <img src="/version/favicon-light.svg" alt="SubConverter-Extended" width="48" height="48" decoding="async">
+                    <img src="/version/favicon-light.svg" alt="" width="48" height="48" decoding="async">
                 </picture>
                 <div>
                     <h1><span data-lang="en">SubConverter-Extended Dashboard</span><span data-lang="zh">SubConverter-Extended 仪表盘</span></h1>
@@ -777,16 +804,16 @@ std::string page(Request &, Response &response) {
                         <span data-lang="zh">运行期转换统计</span>
                     </div>
                 </div>
-            </div>
-            <div class="actions">
-                <a class="page-link" href="/version" aria-label="Open version page">
+            </a>
+            <nav class="actions" aria-label="Site">
+                <a class="page-link" href="/">
                     <svg viewBox="0 0 24 24" aria-hidden="true">
-                        <path d="M20.6 13.2 13.2 20.6a2 2 0 0 1-2.8 0L3.4 13.6a2 2 0 0 1-.6-1.4V5a2 2 0 0 1 2-2h7.2a2 2 0 0 1 1.4.6l7.2 7.2a2 2 0 0 1 0 2.8Z"></path>
-                        <circle cx="7.5" cy="7.5" r="1.2"></circle>
+                        <path d="M5 12h14"></path>
+                        <path d="M12 5l7 7-7 7"></path>
                     </svg>
-                    <span data-lang="en">Version</span><span data-lang="zh">版本信息</span>
+                    <span data-lang="en">Convert</span><span data-lang="zh">转换</span>
                 </a>
-                <a class="page-link" href="/inspect" aria-label="Open inspector">
+                <a class="page-link" href="/inspect">
                     <svg viewBox="0 0 24 24" aria-hidden="true">
                         <circle cx="11" cy="11" r="6"></circle>
                         <path d="m16 16 4 4"></path>
@@ -795,6 +822,23 @@ std::string page(Request &, Response &response) {
                     </svg>
                     <span data-lang="en">Inspector</span><span data-lang="zh">诊断台</span>
                 </a>
+                <a class="page-link" href="/version">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M20.6 13.2 13.2 20.6a2 2 0 0 1-2.8 0L3.4 13.6a2 2 0 0 1-.6-1.4V5a2 2 0 0 1 2-2h7.2a2 2 0 0 1 1.4.6l7.2 7.2a2 2 0 0 1 0 2.8Z"></path>
+                        <circle cx="7.5" cy="7.5" r="1.2"></circle>
+                    </svg>
+                    <span data-lang="en">Version</span><span data-lang="zh">版本信息</span>
+                </a>
+                <a class="page-link" href="/dashboard" aria-current="page">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M4 19V5"></path>
+                        <path d="M4 19h16"></path>
+                        <path d="M8 16v-5"></path>
+                        <path d="M13 16V8"></path>
+                        <path d="M18 16v-3"></path>
+                    </svg>
+                    <span data-lang="en">Dashboard</span><span data-lang="zh">仪表盘</span>
+                </a>
                 <button type="button" id="refresh-button">
                     <span data-lang="en">Refresh</span><span data-lang="zh">刷新</span>
                 </button>
@@ -802,8 +846,8 @@ std::string page(Request &, Response &response) {
                     <button type="button" id="refresh-interval-button" aria-haspopup="menu" aria-expanded="false">Auto: 3s</button>
                     <div class="refresh-menu" id="refresh-menu" role="menu" hidden></div>
                 </div>
-                <button type="button" id="lang-toggle">EN</button>
-            </div>
+                <button type="button" id="lang-toggle" aria-label="切换到中文">中</button>
+            </nav>
         </div>
 
         <section class="panel">
@@ -1771,11 +1815,25 @@ std::string page(Request &, Response &response) {
             function triggerRefresh() {
                 refresh().catch(function () {});
             }
+            function updateLanguageToggle() {
+                var toggle = document.getElementById("lang-toggle");
+                if (!toggle) return;
+                if (isZh()) {
+                    toggle.textContent = "EN";
+                    toggle.setAttribute("aria-label", "Switch to English");
+                    toggle.setAttribute("title", "Switch to English");
+                } else {
+                    toggle.textContent = "中";
+                    toggle.setAttribute("aria-label", "切换到中文");
+                    toggle.setAttribute("title", "切换到中文");
+                }
+            }
             document.getElementById("lang-toggle").addEventListener("click", function () {
-                document.documentElement.lang = isZh() ? "en" : "zh-CN";
-                localStorage.setItem("sce-dashboard-lang", document.documentElement.lang);
+                var next = isZh() ? "en" : "zh-CN";
+                document.documentElement.lang = next;
+                try { localStorage.setItem("sce-ui-lang", next); } catch (e) {}
                 updateDocumentTitle();
-                document.getElementById("lang-toggle").textContent = isZh() ? "中" : "EN";
+                updateLanguageToggle();
                 updateRefreshIntervalUi();
                 if (latest) render(latest);
             });
@@ -1797,7 +1855,7 @@ std::string page(Request &, Response &response) {
                     triggerRefresh();
             });
             updateDocumentTitle();
-            document.getElementById("lang-toggle").textContent = isZh() ? "中" : "EN";
+            updateLanguageToggle();
             updateRefreshIntervalUi();
             triggerRefresh();
             loadMapResources();

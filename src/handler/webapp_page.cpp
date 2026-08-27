@@ -31,8 +31,14 @@ std::string page(Request &, Response &response) {
     <title>SubConverter-Extended</title>
     <script>
         (function () {
-            var saved = localStorage.getItem("sce-webapp-lang");
-            if (saved) { document.documentElement.lang = saved; return; }
+            var saved = null;
+            try {
+                saved = localStorage.getItem("sce-ui-lang")
+                    || localStorage.getItem("sce-webapp-lang")
+                    || localStorage.getItem("sce-dashboard-lang");
+            } catch (e) {}
+            if (saved === "zh" || saved === "zh-CN") { document.documentElement.lang = "zh-CN"; return; }
+            if (saved === "en") { document.documentElement.lang = "en"; return; }
             var languages = navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language || ""];
             document.documentElement.lang = languages.some(function(l) { return /^zh\b/i.test(l); }) ? "zh-CN" : "en";
         })();
@@ -61,12 +67,16 @@ std::string page(Request &, Response &response) {
             --control-bg: rgba(255, 255, 255, 0.72);
             --control-hover: rgba(255, 255, 255, 0.92);
             --control-border: rgba(26, 32, 44, 0.12);
-            --success: #10b981;
-            --success-bg: rgba(16, 185, 129, 0.1);
-            --error: #ef4444;
-            --error-bg: rgba(239, 68, 68, 0.1);
-            --warn: #f59e0b;
-            --warn-bg: rgba(245, 158, 11, 0.1);
+            --success: #047857;
+            --success-bg: rgba(4, 120, 87, 0.12);
+            --error: #b91c1c;
+            --error-bg: rgba(185, 28, 28, 0.12);
+            --warn: #b45309;
+            --warn-bg: rgba(180, 83, 9, 0.12);
+            --focus-ring: #1d4ed8;
+            --btn-fg: #0b1220;
+            --accent-soft: rgba(2, 132, 199, 0.1);
+            --status-border: rgba(2, 132, 199, 0.22);
         }
         @media (prefers-color-scheme: dark) {
             :root {
@@ -86,19 +96,27 @@ std::string page(Request &, Response &response) {
                 --control-bg: rgba(20, 24, 33, 0.7);
                 --control-hover: rgba(35, 42, 56, 0.86);
                 --control-border: rgba(255, 255, 255, 0.16);
-                --success: #34d399;
-                --success-bg: rgba(52, 211, 153, 0.15);
-                --error: #f87171;
-                --error-bg: rgba(248, 113, 113, 0.15);
-                --warn: #fbbf24;
-                --warn-bg: rgba(251, 191, 36, 0.15);
+                --success: #065f46;
+                --success-bg: rgba(6, 95, 70, 0.22);
+                --error: #991b1b;
+                --error-bg: rgba(153, 27, 27, 0.22);
+                --warn: #b45309;
+                --warn-bg: rgba(180, 83, 9, 0.2);
+                --focus-ring: #38bdf8;
+                --btn-fg: #0b1220;
+                --accent-soft: rgba(56, 189, 248, 0.12);
+                --status-border: rgba(56, 189, 248, 0.28);
             }
         }
         html[lang^="zh"] [data-lang="en"],
         html:not([lang^="zh"]) [data-lang="zh"] { display: none; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
+        html[lang^="zh"] body {
+            font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", "Noto Sans CJK SC", system-ui, sans-serif;
+        }
+        html[lang^="zh"] h1, html[lang^="zh"] .brand-text h1 { line-height: 1.35; }
         body {
-            font-family: 'Outfit', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", sans-serif;
+            font-family: 'Outfit', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
             min-height: 100vh;
             color: var(--text-primary);
             background: var(--bg-gradient);
@@ -128,15 +146,15 @@ std::string page(Request &, Response &response) {
             display: flex; align-items: center; justify-content: space-between;
             gap: 16px; margin-bottom: 24px; flex-wrap: wrap;
         }
-        .brand { display: flex; align-items: center; gap: 14px; }
-        .brand-icon {
-            width: 48px; height: 48px;
-            background: var(--accent-gradient);
-            border-radius: 14px;
-            display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 8px 24px rgba(2, 132, 199, 0.25);
+        .brand, .brand-link {
+            display: flex; align-items: center; gap: 14px;
+            color: inherit; text-decoration: none; min-width: 0;
         }
-        .brand-icon svg { width: 28px; height: 28px; stroke: white; stroke-width: 2; fill: none; }
+        .brand-link:hover { color: inherit; }
+        .brand img {
+            width: 48px; height: 48px; flex: 0 0 auto;
+            filter: drop-shadow(0 12px 24px rgba(2, 132, 199, 0.16));
+        }
         .brand-text h1 {
             font-size: 1.5rem; font-weight: 700; line-height: 1.2;
             background: linear-gradient(135deg, var(--text-primary) 0%, var(--accent) 100%);
@@ -154,6 +172,16 @@ std::string page(Request &, Response &response) {
             transition: all 0.2s ease;
         }
         .nav-link:hover { background: var(--control-hover); transform: translateY(-1px); }
+        .nav-link[aria-current="page"] {
+            background: var(--accent-soft);
+            border-color: var(--status-border);
+        }
+        .nav-link:focus-visible, .lang-btn:focus-visible, .quick-btn:focus-visible,
+        .tab:focus-visible, .preset-btn:focus-visible, .btn-primary:focus-visible,
+        .btn-secondary:focus-visible, .btn-copy:focus-visible, .history-item:focus-visible,
+        .del-btn:focus-visible {
+            outline: 2px solid var(--focus-ring); outline-offset: 2px;
+        }
         .nav-link svg { width: 16px; height: 16px; stroke: currentColor; fill: none; }
         .lang-btn {
             min-width: 44px; height: 36px; padding: 0 12px;
@@ -173,7 +201,7 @@ std::string page(Request &, Response &response) {
             padding: 8px 14px; border-radius: 999px;
             background: var(--surface); border: 1px solid var(--surface-border);
             color: var(--text-secondary); text-decoration: none;
-            font-size: 0.82rem; font-weight: 600;
+            font: inherit; font-size: 0.82rem; font-weight: 600;
             backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
             transition: all 0.2s ease; cursor: pointer;
         }
@@ -223,13 +251,17 @@ std::string page(Request &, Response &response) {
         .field input, .field select, .field textarea {
             font-family: inherit; font-size: 0.9rem; padding: 12px 14px;
             background: var(--control-bg); border: 1px solid var(--control-border);
-            border-radius: 12px; color: var(--text-primary); outline: none;
+            border-radius: 12px; color: var(--text-primary);
             transition: border-color 0.2s, box-shadow 0.2s;
         }
         .field textarea { min-height: 100px; resize: vertical; line-height: 1.5; }
-        .field input:focus, .field select:focus, .field textarea:focus {
+        .field input:focus-visible, .field select:focus-visible, .field textarea:focus-visible {
+            outline: 2px solid var(--focus-ring); outline-offset: 2px;
             border-color: var(--accent);
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
+        }
+        .field input:disabled, .field textarea:disabled {
+            opacity: 0.65; cursor: not-allowed;
         }
         .field input::placeholder, .field textarea::placeholder { color: var(--text-muted); }
         .field .hint { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
@@ -253,7 +285,7 @@ std::string page(Request &, Response &response) {
             display: flex; align-items: center; justify-content: center; gap: 10px;
             width: 100%; padding: 16px 24px; margin-top: 24px;
             background: var(--accent-gradient); border: none; border-radius: 14px;
-            color: white; font: inherit; font-size: 1rem; font-weight: 700;
+            color: var(--btn-fg); font: inherit; font-size: 1rem; font-weight: 700;
             cursor: pointer; transition: all 0.2s;
             box-shadow: 0 8px 24px rgba(2, 132, 199, 0.3);
         }
@@ -347,7 +379,7 @@ std::string page(Request &, Response &response) {
         .history-item:hover { background: var(--control-hover); border-color: var(--accent); }
         .history-item .target-badge {
             padding: 4px 10px; border-radius: 6px;
-            background: var(--accent-gradient); color: white;
+            background: var(--accent-gradient); color: var(--btn-fg);
             font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
         }
         .history-item .url-preview {
@@ -361,9 +393,10 @@ std::string page(Request &, Response &response) {
         .history-item .del-btn {
             padding: 4px; border-radius: 6px; border: none;
             background: transparent; color: var(--text-muted);
-            cursor: pointer; opacity: 0; transition: all 0.15s;
+            cursor: pointer; min-width: 24px; min-height: 24px;
+            display: inline-flex; align-items: center; justify-content: center;
         }
-        .history-item:hover .del-btn { opacity: 1; }
+        .history-empty { padding: 20px; text-align: center; }
         .history-item .del-btn:hover { color: var(--error); background: var(--error-bg); }
         /* Presets */
         .presets-bar {
@@ -376,7 +409,10 @@ std::string page(Request &, Response &response) {
             cursor: pointer; transition: all 0.15s;
         }
         .preset-btn:hover { background: var(--surface-strong); color: var(--accent); border-color: var(--accent); }
-        .preset-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+        .preset-btn.active { background: var(--accent); color: var(--btn-fg); border-color: var(--accent); }
+        .convert-bar { padding: 0 24px 24px; }
+        .convert-bar .btn-primary { margin-top: 0; }
+        [hidden] { display: none !important; }
         /* Footer */
         footer {
             margin-top: 32px; text-align: center;
@@ -384,6 +420,14 @@ std::string page(Request &, Response &response) {
         }
         footer a { color: var(--accent); text-decoration: none; }
         footer a:hover { text-decoration: underline; }
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                scroll-behavior: auto !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
         /* Mobile */
         @media (max-width: 640px) {
             body { padding: 16px 12px; }
@@ -401,63 +445,71 @@ std::string page(Request &, Response &response) {
     <div class="shell">
         <!-- Header -->
         <header class="topbar">
-            <div class="brand">
-                <div class="brand-icon">
-                    <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
-                </div>
+            <a class="brand brand-link" href="/" aria-current="page">
+                <picture>
+                    <source media="(prefers-color-scheme: dark)" srcset="/version/favicon-dark.svg">
+                    <img src="/version/favicon-light.svg" alt="" width="48" height="48" decoding="async">
+                </picture>
                 <div class="brand-text">
                     <h1>SubConverter-Extended</h1>
                     <p data-lang="en">Subscription Configuration Converter</p>
                     <p data-lang="zh">订阅配置转换工具</p>
                 </div>
-            </div>
-            <div class="topbar-actions">
-                <a class="nav-link" href="/version">
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><circle cx="12" cy="8" r="1"></circle></svg>
-                    <span data-lang="en">Version</span><span data-lang="zh">版本</span>
+            </a>
+            <nav class="topbar-actions" aria-label="Site">
+                <a class="nav-link" href="/" aria-current="page">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"></path><path d="M12 5l7 7-7 7"></path></svg>
+                    <span data-lang="en">Convert</span><span data-lang="zh">转换</span>
                 </a>
                 <a class="nav-link" href="/inspect">
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.35-4.35"></path></svg>
-                    <span data-lang="en">Inspect</span><span data-lang="zh">诊断</span>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"></circle><path d="m16 16 4 4"></path><path d="M8.5 11h5"></path><path d="M11 8.5v5"></path></svg>
+                    <span data-lang="en">Inspector</span><span data-lang="zh">诊断台</span>
+                </a>
+                <a class="nav-link" href="/version">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.6 13.2 13.2 20.6a2 2 0 0 1-2.8 0L3.4 13.6a2 2 0 0 1-.6-1.4V5a2 2 0 0 1 2-2h7.2a2 2 0 0 1 1.4.6l7.2 7.2a2 2 0 0 1 0 2.8Z"></path><circle cx="7.5" cy="7.5" r="1.2"></circle></svg>
+                    <span data-lang="en">Version</span><span data-lang="zh">版本信息</span>
                 </a>
                 )html" +
             dashboard_link +
             R"html(
-                <button class="lang-btn" id="lang-btn" aria-label="Toggle language">EN</button>
-            </div>
+                <button type="button" class="lang-btn" id="lang-btn" aria-label="切换到中文">中</button>
+            </nav>
         </header>
 
         <!-- Quick Actions -->
         <div class="quick-actions">
-            <a class="quick-btn" href="/clash" title="Clash / Mihomo"><svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>Clash</a>
-            <a class="quick-btn" href="/clashr" title="ClashR"><svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>ClashR</a>
-            <a class="quick-btn" href="/surge" title="Surge"><svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>Surge</a>
-            <a class="quick-btn" href="/quanx" title="Quantumult X"><svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>QuanX</a>
-            <a class="quick-btn" href="/quan" title="Quantumult"><svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>Quan</a>
-            <a class="quick-btn" href="/loon" title="Loon"><svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>Loon</a>
-            <a class="quick-btn" href="/surfboard" title="Surfboard"><svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>Surfboard</a>
-            <a class="quick-btn" href="/mellow" title="Mellow"><svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>Mellow</a>
-            <a class="quick-btn" href="/singbox" title="Sing-box"><svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>Sing-box</a>
-            <a class="quick-btn" href="/ss" title="Shadowsocks"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>SS</a>
-            <a class="quick-btn" href="/ssr" title="ShadowsocksR"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>SSR</a>
-            <a class="quick-btn" href="/v2ray" title="V2Ray"><svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>V2Ray</a>
-            <a class="quick-btn" href="/trojan" title="Trojan"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Trojan</a>
-            <a class="quick-btn" href="/mixed" title="Mixed"><svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>Mixed</a>
+            <button type="button" class="quick-btn" data-target="clash" title="Clash / Mihomo"><svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>Clash</button>
+            <button type="button" class="quick-btn" data-target="clashr" title="ClashR"><svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>ClashR</button>
+            <button type="button" class="quick-btn" data-target="surge" title="Surge"><svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>Surge</button>
+            <button type="button" class="quick-btn" data-target="quanx" title="Quantumult X"><svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>QuanX</button>
+            <button type="button" class="quick-btn" data-target="quan" title="Quantumult"><svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>Quan</button>
+            <button type="button" class="quick-btn" data-target="loon" title="Loon"><svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>Loon</button>
+            <button type="button" class="quick-btn" data-target="surfboard" title="Surfboard"><svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>Surfboard</button>
+            <button type="button" class="quick-btn" data-target="mellow" title="Mellow"><svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>Mellow</button>
+            <button type="button" class="quick-btn" data-target="singbox" title="Sing-box"><svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>Sing-box</button>
+            <button type="button" class="quick-btn" data-target="ss" title="Shadowsocks"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>SS</button>
+            <button type="button" class="quick-btn" data-target="ssr" title="ShadowsocksR"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>SSR</button>
+            <button type="button" class="quick-btn" data-target="v2ray" title="V2Ray"><svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>V2Ray</button>
+            <button type="button" class="quick-btn" data-target="trojan" title="Trojan"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Trojan</button>
+            <button type="button" class="quick-btn" data-target="mixed" title="Mixed"><svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>Mixed</button>
         </div>
 
         <!-- Main Panel -->
         <div class="panel">
-            <div class="tabs">
-                <button class="tab active" data-tab="basic" data-lang="en">Basic</button>
-                <button class="tab active" data-tab="basic" data-lang="zh">基础</button>
-                <button class="tab" data-tab="advanced" data-lang="en">Advanced</button>
-                <button class="tab" data-tab="advanced" data-lang="zh">高级</button>
-                <button class="tab" data-tab="history" data-lang="en">History</button>
-                <button class="tab" data-tab="history" data-lang="zh">历史</button>
+            <div class="tabs" role="tablist">
+                <button type="button" class="tab active" role="tab" id="tab-btn-basic" data-tab="basic" aria-selected="true" aria-controls="tab-basic">
+                    <span data-lang="en">Basic</span><span data-lang="zh">基础</span>
+                </button>
+                <button type="button" class="tab" role="tab" id="tab-btn-advanced" data-tab="advanced" aria-selected="false" aria-controls="tab-advanced">
+                    <span data-lang="en">Advanced</span><span data-lang="zh">高级</span>
+                </button>
+                <button type="button" class="tab" role="tab" id="tab-btn-history" data-tab="history" aria-selected="false" aria-controls="tab-history">
+                    <span data-lang="en">History</span><span data-lang="zh">历史</span>
+                </button>
             </div>
 
             <!-- Basic Tab -->
-            <div class="tab-content active" id="tab-basic">
+            <div class="tab-content active" id="tab-basic" role="tabpanel" aria-labelledby="tab-btn-basic">
                 <form id="convert-form" autocomplete="off">
                     <!-- Presets -->
                     <div class="presets-bar">
@@ -465,7 +517,6 @@ std::string page(Request &, Response &response) {
                         <button type="button" class="preset-btn" data-preset="surge">Surge</button>
                         <button type="button" class="preset-btn" data-preset="quanx">QuanX</button>
                         <button type="button" class="preset-btn" data-preset="singbox">Sing-box</button>
-                        <button type="button" class="preset-btn" data-preset="nodes">🔗 <span data-lang="en">Node List</span><span data-lang="zh">节点列表</span></button>
                     </div>
 
                     <div class="form-grid">
@@ -530,26 +581,17 @@ std::string page(Request &, Response &response) {
                             <span class="hint" data-lang="zh">可选。留空则使用默认配置文件。</span>
                         </div>
                     </div>
-
-                    <button type="submit" class="btn-primary" id="convert-btn">
-                        <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-                        <span data-lang="en">Convert</span><span data-lang="zh">转换</span>
-                    </button>
                 </form>
             </div>
 
             <!-- Advanced Tab -->
-            <div class="tab-content" id="tab-advanced">
+            <div class="tab-content" id="tab-advanced" role="tabpanel" aria-labelledby="tab-btn-advanced">
                 <form id="advanced-form" autocomplete="off">
                     <div class="form-grid">
                         <div class="field full">
                             <label data-lang="en">Options</label>
                             <label data-lang="zh">选项</label>
                             <div class="checkbox-grid">
-                                <label class="checkbox-field">
-                                    <input type="checkbox" name="list">
-                                    <span data-lang="en">Node list only</span><span data-lang="zh">仅节点列表</span>
-                                </label>
                                 <label class="checkbox-field">
                                     <input type="checkbox" name="sort">
                                     <span data-lang="en">Sort nodes</span><span data-lang="zh">排序节点</span>
@@ -569,10 +611,6 @@ std::string page(Request &, Response &response) {
                                 <label class="checkbox-field">
                                     <input type="checkbox" name="tls13">
                                     <span>TLS 1.3</span>
-                                </label>
-                                <label class="checkbox-field">
-                                    <input type="checkbox" name="new_name">
-                                    <span data-lang="en">New name field</span><span data-lang="zh">新名称字段</span>
                                 </label>
                                 <label class="checkbox-field">
                                     <input type="checkbox" name="append_type">
@@ -629,14 +667,16 @@ std::string page(Request &, Response &response) {
                         <div class="field full">
                             <label for="filter_script" data-lang="en">Filter Script URL</label>
                             <label for="filter_script" data-lang="zh">过滤脚本 URL</label>
-                            <input id="filter_script" name="filter_script" type="url" placeholder="https://example.com/filter.js">
+                            <input id="filter_script" name="filter_script" type="url" placeholder="https://example.com/filter.js" disabled>
+                            <span class="hint" data-lang="en">Request-side scripts are ignored while the service runs in API mode.</span>
+                            <span class="hint" data-lang="zh">当前为 API 模式，请求侧脚本不会生效。</span>
                         </div>
                     </div>
                 </form>
             </div>
 
             <!-- History Tab -->
-            <div class="tab-content" id="tab-history">
+            <div class="tab-content" id="tab-history" role="tabpanel" aria-labelledby="tab-btn-history">
                 <div class="history-section">
                     <div class="history-header">
                         <h4 data-lang="en">Recent Conversions</h4>
@@ -647,10 +687,16 @@ std::string page(Request &, Response &response) {
                         </button>
                     </div>
                     <div class="history-list" id="history-list">
-                        <p class="hint" style="padding: 20px; text-align: center;" data-lang="en">No conversion history yet.</p>
-                        <p class="hint" style="padding: 20px; text-align: center;" data-lang="zh">暂无转换历史。</p>
+                        <p class="hint history-empty" data-lang="en">No conversion history yet.</p>
+                        <p class="hint history-empty" data-lang="zh">暂无转换历史。</p>
                     </div>
                 </div>
+            </div>
+            <div class="convert-bar" id="convert-bar">
+                <button type="submit" class="btn-primary" id="convert-btn" form="convert-form">
+                    <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                    <span data-lang="en">Convert</span><span data-lang="zh">转换</span>
+                </button>
             </div>
         </div>
 
@@ -678,15 +724,15 @@ std::string page(Request &, Response &response) {
         <footer>
             <span data-lang="en">SubConverter-Extended )html" +
       std::string(VERSION) +
-      R"html( · <a href="/version">Version</a> · <a href="https://github.com/Aethersailor/SubConverter-Extended" target="_blank">GitHub</a> · <a href="https://www.gnu.org/licenses/gpl-3.0.html" target="_blank">GPL-3.0</a></span>
+      R"html( · <a href="/version">Version</a> · <a href="https://github.com/Aethersailor/SubConverter-Extended" target="_blank" rel="noopener noreferrer">GitHub</a> · <a href="https://www.gnu.org/licenses/gpl-3.0.html" target="_blank" rel="noopener noreferrer">GPL-3.0</a></span>
             <span data-lang="zh">SubConverter-Extended )html" +
       std::string(VERSION) +
-      R"html( · <a href="/version">版本</a> · <a href="https://github.com/Aethersailor/SubConverter-Extended" target="_blank">GitHub</a> · <a href="https://www.gnu.org/licenses/gpl-3.0.html" target="_blank">GPL-3.0</a></span>
+      R"html( · <a href="/version">版本</a> · <a href="https://github.com/Aethersailor/SubConverter-Extended" target="_blank" rel="noopener noreferrer">GitHub</a> · <a href="https://www.gnu.org/licenses/gpl-3.0.html" target="_blank" rel="noopener noreferrer">GPL-3.0</a></span>
         </footer>
     </div>
 
     <!-- Toast -->
-    <div class="toast" id="toast">
+    <div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true">
         <svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
         <span id="toast-msg"></span>
     </div>
@@ -727,35 +773,62 @@ std::string page(Request &, Response &response) {
             return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
         }
 
-        // Tab switching
+        var convertBar = document.getElementById('convert-bar');
+        var urlField = document.getElementById('url');
+
+        function prefersReducedMotion() {
+            return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        }
+        function escapeHtml(value) {
+            return String(value == null ? '' : value).replace(/[&<>"']/g, function (ch) {
+                return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch];
+            });
+        }
+        function updateLanguageToggle() {
+            var btn = document.getElementById('lang-btn');
+            if (!btn) return;
+            if (isZh()) {
+                btn.textContent = 'EN';
+                btn.setAttribute('aria-label', 'Switch to English');
+                btn.setAttribute('title', 'Switch to English');
+            } else {
+                btn.textContent = '中';
+                btn.setAttribute('aria-label', '切换到中文');
+                btn.setAttribute('title', '切换到中文');
+            }
+        }
+
+        function setActiveTab(target) {
+            document.querySelectorAll('.tab').forEach(function(t) {
+                var selected = t.getAttribute('data-tab') === target;
+                t.classList.toggle('active', selected);
+                t.setAttribute('aria-selected', selected ? 'true' : 'false');
+            });
+            document.querySelectorAll('.tab-content').forEach(function(c) { c.classList.remove('active'); });
+            document.getElementById('tab-' + target).classList.add('active');
+            if (convertBar) convertBar.hidden = target === 'history';
+            if (target === 'history') renderHistory();
+        }
+
         document.querySelectorAll('.tab').forEach(function(tab) {
             tab.addEventListener('click', function() {
-                var target = this.getAttribute('data-tab');
-                document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
-                document.querySelectorAll('.tab-content').forEach(function(c) { c.classList.remove('active'); });
-                document.querySelectorAll('[data-tab="' + target + '"]').forEach(function(t) { t.classList.add('active'); });
-                document.getElementById('tab-' + target).classList.add('active');
-                if (target === 'history') renderHistory();
+                setActiveTab(this.getAttribute('data-tab'));
             });
         });
 
-        // Language toggle
         document.getElementById('lang-btn').addEventListener('click', function() {
             var next = isZh() ? 'en' : 'zh-CN';
             document.documentElement.lang = next;
-            localStorage.setItem('sce-webapp-lang', next);
-            this.textContent = isZh() ? 'EN' : '中';
+            try { localStorage.setItem('sce-ui-lang', next); } catch (e) {}
+            updateLanguageToggle();
         });
-        // Init lang button
-        document.getElementById('lang-btn').textContent = isZh() ? 'EN' : '中';
+        updateLanguageToggle();
 
-        // Presets
         var PRESETS = {
-            clash: { target: 'clash', emoji: 'true', list: false },
-            surge: { target: 'surge', emoji: 'true', list: false },
-            quanx: { target: 'quanx', emoji: 'true', list: false },
-            singbox: { target: 'singbox', emoji: 'true', list: false },
-            nodes: { target: 'clash', emoji: 'true', list: true }
+            clash: { target: 'clash', emoji: 'true' },
+            surge: { target: 'surge', emoji: 'true' },
+            quanx: { target: 'quanx', emoji: 'true' },
+            singbox: { target: 'singbox', emoji: 'true' }
         };
         document.querySelectorAll('.preset-btn[data-preset]').forEach(function(btn) {
             btn.addEventListener('click', function() {
@@ -763,14 +836,14 @@ std::string page(Request &, Response &response) {
                 if (!preset) return;
                 document.getElementById('target').value = preset.target;
                 document.getElementById('emoji').value = preset.emoji;
-                var listCb = advancedForm.querySelector('[name="list"]');
-                if (listCb) listCb.checked = preset.list;
                 document.querySelectorAll('.preset-btn').forEach(function(b) { b.classList.remove('active'); });
                 this.classList.add('active');
                 saveForm();
                 showToast(text('Preset applied', '预设已应用'), 'success');
             });
         });
+
+        var CHECKBOX_NAMES = ['sort','udp','tfo','scv','tls13','append_type','fdn','expand','append_info','insert','prepend','strict','classic','provider_proxy_direct'];
 
         // Form persistence
         function saveForm() {
@@ -783,11 +856,9 @@ std::string page(Request &, Response &response) {
                 config: document.getElementById('config').value,
                 group: document.getElementById('group').value,
                 rename: document.getElementById('rename').value,
-                filter_script: document.getElementById('filter_script').value,
                 checkboxes: {}
             };
-            var cbs = ['list','sort','udp','tfo','scv','tls13','new_name','append_type','fdn','expand','append_info','insert','prepend','strict','classic','provider_proxy_direct'];
-            cbs.forEach(function(name) {
+            CHECKBOX_NAMES.forEach(function(name) {
                 var el = document.querySelector('[name="' + name + '"]');
                 if (el) data.checkboxes[name] = el.checked;
             });
@@ -806,7 +877,6 @@ std::string page(Request &, Response &response) {
                 if (data.config) document.getElementById('config').value = data.config;
                 if (data.group) document.getElementById('group').value = data.group;
                 if (data.rename) document.getElementById('rename').value = data.rename;
-                if (data.filter_script) document.getElementById('filter_script').value = data.filter_script;
                 if (data.checkboxes) {
                     Object.keys(data.checkboxes).forEach(function(name) {
                         var el = document.querySelector('[name="' + name + '"]');
@@ -833,24 +903,43 @@ std::string page(Request &, Response &response) {
             if (history.length > MAX_HISTORY) history = history.slice(0, MAX_HISTORY);
             saveHistory(history);
         }
+        function historyEmptyHtml() {
+            return '<p class="hint history-empty" data-lang="en">No conversion history yet.</p>' +
+                '<p class="hint history-empty" data-lang="zh">暂无转换历史。</p>';
+        }
         function renderHistory() {
             var history = getHistory();
-            if (!history.length) return;
+            if (!history.length) {
+                historyList.innerHTML = historyEmptyHtml();
+                return;
+            }
             historyList.innerHTML = history.map(function(item, i) {
-                return '<div class="history-item" data-index="' + i + '">' +
-                    '<span class="target-badge">' + (item.target || '?') + '</span>' +
-                    '<span class="url-preview">' + (item.url || '').substring(0, 60) + (item.url && item.url.length > 60 ? '...' : '') + '</span>' +
-                    '<span class="time">' + item.time + '</span>' +
-                    '<button class="del-btn" data-index="' + i + '" title="' + text('Delete', '删除') + '">' +
+                var preview = (item.url || '').substring(0, 60) + (item.url && item.url.length > 60 ? '...' : '');
+                return '<div class="history-item" data-index="' + i + '" role="button" tabindex="0">' +
+                    '<span class="target-badge">' + escapeHtml(item.target || '?') + '</span>' +
+                    '<span class="url-preview">' + escapeHtml(preview) + '</span>' +
+                    '<span class="time">' + escapeHtml(item.time || '') + '</span>' +
+                    '<button type="button" class="del-btn" data-index="' + i + '" title="' + text('Delete', '删除') + '" aria-label="' + text('Delete', '删除') + '">' +
                     '<svg width="14" height="14" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>' +
                     '</button></div>';
             }).join('');
+        }
+        function restoreHistoryEntry(idx) {
+            var entry = getHistory()[idx];
+            if (!entry) return;
+            if (entry.target) document.getElementById('target').value = entry.target;
+            if (entry.url) document.getElementById('url').value = entry.url;
+            if (entry.include) document.getElementById('include').value = entry.include;
+            if (entry.exclude) document.getElementById('exclude').value = entry.exclude;
+            setActiveTab('basic');
+            saveForm();
+            showToast(text('Config restored', '配置已恢复'), 'success');
         }
         historyList.addEventListener('click', function(e) {
             var delBtn = e.target.closest('.del-btn');
             if (delBtn) {
                 e.stopPropagation();
-                var idx = parseInt(delBtn.getAttribute('data-index'));
+                var idx = parseInt(delBtn.getAttribute('data-index'), 10);
                 var history = getHistory();
                 history.splice(idx, 1);
                 saveHistory(history);
@@ -858,18 +947,15 @@ std::string page(Request &, Response &response) {
                 return;
             }
             var item = e.target.closest('.history-item');
-            if (item) {
-                var idx = parseInt(item.getAttribute('data-index'));
-                var entry = getHistory()[idx];
-                if (entry) {
-                    if (entry.target) document.getElementById('target').value = entry.target;
-                    if (entry.url) document.getElementById('url').value = entry.url;
-                    if (entry.include) document.getElementById('include').value = entry.include;
-                    if (entry.exclude) document.getElementById('exclude').value = entry.exclude;
-                    document.querySelectorAll('.tab[data-tab="basic"]').forEach(function(t) { t.click(); });
-                    saveForm();
-                    showToast(text('Config restored', '配置已恢复'), 'success');
-                }
+            if (item) restoreHistoryEntry(parseInt(item.getAttribute('data-index'), 10));
+        });
+        historyList.addEventListener('keydown', function(e) {
+            if (e.target.closest('.del-btn')) return;
+            var item = e.target.closest('.history-item');
+            if (!item) return;
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                restoreHistoryEntry(parseInt(item.getAttribute('data-index'), 10));
             }
         });
         document.getElementById('clear-history').addEventListener('click', function() {
@@ -879,33 +965,41 @@ std::string page(Request &, Response &response) {
         });
 
         // URL validation
-        function validateUrl(url) {
-            if (!url) return true; // Empty is OK (may use default)
-            var urls = url.split('|');
-            var valid = true;
-            urls.forEach(function(u) {
-                u = u.trim();
-                if (!u) return;
-                // Check for valid URI or base64/vmess/trojan etc
-                if (!/^(https?:\/\/|vmess:\/\/|vless:\/\/|ss:\/\/|ssr:\/\/|trojan:\/\/|hysteria2:\/\/|tuic:\/\/|wireguard:\/\/|provider:)/i.test(u)) {
-                    valid = false;
-                }
-            });
-            return valid;
+        function looksLikeUrl(u) {
+            if (/^(https?:\/\/|vmess:\/\/|vless:\/\/|ss:\/\/|ssr:\/\/|trojan:\/\/|hysteria:\/\/|hysteria2:\/\/|hy2:\/\/|tuic:\/\/|wireguard:\/\/|anytls:\/\/|data:|provider:)/i.test(u)) return true;
+            if (/^[A-Za-z0-9][A-Za-z0-9.-]*(:[0-9]+)?([/?#]|$)/.test(u)) return true;
+            return false;
         }
-        document.getElementById('url').addEventListener('blur', function() {
-            var url = this.value.trim();
-            if (url && !validateUrl(url)) {
-                this.classList.add('error');
-                var hint = this.parentElement.querySelector('.error-hint') || document.createElement('span');
-                hint.className = 'hint error-hint';
+        function validateUrl(url) {
+            if (!url) return true;
+            return url.split('|').every(function(u) {
+                u = u.trim();
+                return !u || looksLikeUrl(u);
+            });
+        }
+        function setUrlError(invalid) {
+            var hint = urlField.parentElement.querySelector('.error-hint');
+            if (invalid) {
+                urlField.classList.add('error');
+                urlField.setAttribute('aria-invalid', 'true');
+                if (!hint) {
+                    hint = document.createElement('span');
+                    hint.className = 'hint error-hint';
+                    hint.id = 'url-error';
+                    urlField.parentElement.appendChild(hint);
+                }
                 hint.textContent = text('Invalid URL format', 'URL 格式无效');
-                if (!this.parentElement.querySelector('.error-hint')) this.parentElement.appendChild(hint);
+                urlField.setAttribute('aria-describedby', 'url-error');
             } else {
-                this.classList.remove('error');
-                var hint = this.parentElement.querySelector('.error-hint');
+                urlField.classList.remove('error');
+                urlField.removeAttribute('aria-invalid');
+                urlField.removeAttribute('aria-describedby');
                 if (hint) hint.remove();
             }
+        }
+        urlField.addEventListener('blur', function() {
+            var url = this.value.trim();
+            setUrlError(!!url && !validateUrl(url));
         });
 
         // Form submit
@@ -913,13 +1007,18 @@ std::string page(Request &, Response &response) {
             e.preventDefault();
             var urlVal = document.getElementById('url').value.trim();
             if (!urlVal) {
+                setUrlError(false);
                 showToast(text('Please enter subscription URL', '请输入订阅地址'), 'error');
+                urlField.focus();
                 return;
             }
             if (!validateUrl(urlVal)) {
+                setUrlError(true);
                 showToast(text('Invalid URL format', 'URL 格式无效'), 'error');
+                urlField.focus();
                 return;
             }
+            setUrlError(false);
 
             var params = new URLSearchParams();
             var fd = new FormData(form);
@@ -948,12 +1047,7 @@ std::string page(Request &, Response &response) {
             var rename = advFd.get('rename') || '';
             if (rename) params.set('rename', rename.trim());
 
-            var filterScript = advFd.get('filter_script') || '';
-            if (filterScript) params.set('filter_script', filterScript.trim());
-
-            // Checkboxes
-            var checkboxes = ['list','sort','udp','tfo','scv','tls13','new_name','append_type','fdn','expand','append_info','insert','prepend','strict','classic','provider_proxy_direct'];
-            checkboxes.forEach(function(name) {
+            CHECKBOX_NAMES.forEach(function(name) {
                 var el = advancedForm.querySelector('[name="' + name + '"]');
                 if (el && el.checked) params.set(name, 'true');
             });
@@ -979,7 +1073,7 @@ std::string page(Request &, Response &response) {
                     // Show result
                     resultOutput.textContent = text;
                     resultPanel.style.display = 'block';
-                    resultPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    resultPanel.scrollIntoView({ behavior: prefersReducedMotion() ? 'auto' : 'smooth', block: 'nearest' });
 
                     // Stats
                     var size = new Blob([text]).size;
@@ -1028,13 +1122,10 @@ std::string page(Request &, Response &response) {
         });
 
         // Quick actions sync
-        document.querySelectorAll('.quick-btn[href^="/"]').forEach(function(btn) {
-            btn.addEventListener('click', function(e) {
-                e.preventDefault();
-                var target = this.getAttribute('href').replace('/', '');
-                document.getElementById('target').value = target;
+        document.querySelectorAll('.quick-btn[data-target]').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                document.getElementById('target').value = this.getAttribute('data-target');
                 saveForm();
-                window.location.href = this.getAttribute('href') + (this.search || '');
             });
         });
     })();

@@ -18,7 +18,7 @@ std::string page(Request &request, Response &response) {
   std::string dashboard_link =
       global.statisticsEnabled
           ? R"html(
-                <a class="page-link" href="/dashboard" aria-label="Open dashboard">
+                <a class="page-link" href="/dashboard">
                     <svg viewBox="0 0 24 24" aria-hidden="true">
                         <path d="M4 19V5"></path>
                         <path d="M4 19h16"></path>
@@ -42,13 +42,20 @@ std::string page(Request &request, Response &response) {
     <script>
         (function () {
             function detectPreferredLanguage() {
+                var saved = null;
+                try {
+                    saved = localStorage.getItem("sce-ui-lang")
+                        || localStorage.getItem("sce-webapp-lang")
+                        || localStorage.getItem("sce-dashboard-lang");
+                } catch (e) {}
+                if (saved === "zh" || saved === "zh-CN") return "zh-CN";
+                if (saved === "en") return "en";
                 var languages = navigator.languages && navigator.languages.length
                     ? navigator.languages
                     : [navigator.language || ""];
-                var isChinese = languages.some(function (language) {
+                return languages.some(function (language) {
                     return /^zh\b/i.test(language);
-                });
-                return isChinese ? "zh-CN" : "en";
+                }) ? "zh-CN" : "en";
             }
 
             document.documentElement.lang = detectPreferredLanguage();
@@ -96,6 +103,7 @@ std::string page(Request &request, Response &response) {
             --control-border: rgba(26, 32, 44, 0.12);
             --control-shadow: 0 12px 28px rgba(31, 38, 135, 0.12);
             --code-bg: rgba(15, 23, 42, 0.06);
+            --focus-ring: #1d4ed8;
         }
 
         @media (prefers-color-scheme: dark) {
@@ -132,6 +140,7 @@ std::string page(Request &request, Response &response) {
                 --control-border: rgba(255, 255, 255, 0.16);
                 --control-shadow: 0 16px 34px rgba(0, 0, 0, 0.36);
                 --code-bg: rgba(0, 0, 0, 0.24);
+                --focus-ring: #38bdf8;
             }
         }
 
@@ -142,8 +151,16 @@ std::string page(Request &request, Response &response) {
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
+        html[lang^="zh"] body {
+            font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", "Noto Sans CJK SC", system-ui, sans-serif;
+        }
+        html[lang^="zh"] h1,
+        html[lang^="zh"] .brand-row h1 {
+            line-height: 1.35;
+        }
+
         body {
-            font-family: 'Outfit', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", sans-serif;
+            font-family: 'Outfit', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
             margin: 0;
             min-height: 100vh;
             min-height: 100svh;
@@ -193,11 +210,17 @@ std::string page(Request &request, Response &response) {
             gap: 16px;
             margin-bottom: 24px;
         }
-        .brand-row {
+        .brand-row,
+        .brand-link {
             display: flex;
             align-items: center;
             gap: 14px;
             min-width: 0;
+            color: inherit;
+            text-decoration: none;
+        }
+        .brand-link:hover {
+            color: inherit;
         }
         .brand-row img {
             width: 48px;
@@ -211,6 +234,7 @@ std::string page(Request &request, Response &response) {
             line-height: 1.08;
             letter-spacing: 0;
             overflow-wrap: anywhere;
+            color: var(--text-primary);
             background: none;
             -webkit-background-clip: unset;
             background-clip: unset;
@@ -251,23 +275,28 @@ std::string page(Request &request, Response &response) {
             transform: translateY(-1px);
         }
         .lang-btn:focus-visible {
-            outline: 3px solid rgba(99, 179, 237, 0.35);
+            outline: 2px solid var(--focus-ring);
             outline-offset: 2px;
         }
 
         button:focus-visible,
         textarea:focus-visible,
         input:focus-visible {
-            outline: 3px solid rgba(99, 179, 237, 0.35);
+            outline: 2px solid var(--focus-ring);
             outline-offset: 2px;
         }
 
-        .page-links {
-            display: inline-flex;
-            justify-content: center;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-top: 18px;
+        .page-link[aria-current="page"] {
+            background: var(--accent-soft);
+            border-color: var(--status-border);
+        }
+
+        .page-intro {
+            margin: 0 0 18px;
+            color: var(--text-secondary);
+            font-size: 0.98rem;
+            font-weight: 500;
+            line-height: 1.55;
         }
 
         .page-link {
@@ -296,7 +325,7 @@ std::string page(Request &request, Response &response) {
         }
 
         .page-link:focus-visible {
-            outline: 3px solid rgba(99, 179, 237, 0.35);
+            outline: 2px solid var(--focus-ring);
             outline-offset: 2px;
         }
 
@@ -361,79 +390,6 @@ std::string page(Request &request, Response &response) {
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(30px); }
             to { opacity: 1; transform: translateY(0); }
-        }
-
-        header {
-            text-align: center;
-            margin-bottom: 28px;
-        }
-
-        .brand-mark {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 88px;
-            height: 88px;
-            margin: 0 auto 16px;
-            filter: var(--brand-mark-filter);
-            transition: transform 0.28s ease, filter 0.28s ease;
-        }
-
-        .brand-mark img {
-            display: block;
-            width: 100%;
-            height: 100%;
-        }
-
-        .brand-mark:hover {
-            transform: translateY(-2px) scale(1.02);
-        }
-
-        .status-pill {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            margin-bottom: 14px;
-            padding: 7px 12px;
-            border-radius: 999px;
-            border: 1px solid var(--status-border);
-            background: var(--status-bg);
-            color: var(--text-primary);
-            font-size: 0.78rem;
-            font-weight: 700;
-            letter-spacing: 0;
-            text-transform: uppercase;
-        }
-
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 999px;
-            background: var(--status-dot);
-            box-shadow: 0 0 0 5px color-mix(in srgb, var(--status-dot) 16%, transparent);
-        }
-
-        h1 {
-            background: var(--header-gradient);
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-            font-size: 2.8em;
-            margin-bottom: 10px;
-            font-weight: 700;
-            letter-spacing: 0;
-            line-height: 1.05;
-            overflow-wrap: anywhere;
-        }
-
-        .subtitle {
-            color: var(--text-secondary);
-            font-size: 1.02em;
-            font-weight: 500;
-            letter-spacing: 0;
-            text-transform: uppercase;
-            opacity: 0.72;
         }
 
         .section {
@@ -795,15 +751,6 @@ std::string page(Request &request, Response &response) {
                 border-radius: 24px;
             }
 
-            .brand-mark {
-                width: 76px;
-                height: 76px;
-            }
-
-            h1 {
-                font-size: 2.1em;
-            }
-
             .section {
                 border-radius: 18px;
                 padding: 18px;
@@ -825,11 +772,6 @@ std::string page(Request &request, Response &response) {
             .button-row {
                 display: grid;
                 grid-template-columns: 1fr;
-            }
-
-            .page-links {
-                margin-top: 16px;
-                gap: 8px;
             }
 
             .page-link {
@@ -864,10 +806,10 @@ std::string page(Request &request, Response &response) {
 <body>
     <div class="shell">
         <div class="topbar">
-            <div class="brand-row">
+            <a class="brand-row brand-link" href="/">
                 <picture>
                     <source media="(prefers-color-scheme: dark)" srcset="/version/favicon-dark.svg">
-                    <img src="/version/favicon-light.svg" alt="SubConverter-Extended" width="48" height="48" decoding="async">
+                    <img src="/version/favicon-light.svg" alt="" width="48" height="48" decoding="async">
                 </picture>
                 <div>
                     <h1>SubConverter-Extended</h1>
@@ -876,27 +818,27 @@ std::string page(Request &request, Response &response) {
                         <span data-lang="zh">请求诊断台</span>
                     </div>
                 </div>
-            </div>
-            <div class="actions">
-            <picture class="brand-mark">
-                <source media="(prefers-color-scheme: dark)" srcset="/version/favicon-dark.svg">
-                <img src="/version/favicon-light.svg" alt="SubConverter-Extended icon" width="88" height="88" decoding="async">
-            </picture>
-            <div class="status-pill">
-                <span class="status-dot"></span>
-                <span data-lang="en">Inspector</span>
-                <span data-lang="zh">诊断台</span>
-            </div>
-            <h1>
-                <span data-lang="en">Request Inspector</span>
-                <span data-lang="zh">请求诊断台</span>
-            </h1>
-            <p class="subtitle">
-                <span data-lang="en">Explain conversion without writing managed output</span>
-                <span data-lang="zh">以只读方式解释转换结果</span>
-            </p>
-            <nav class="page-links" aria-label="Page navigation">
-                <a class="page-link" href="/version" aria-label="Open version page">
+            </a>
+            <nav class="actions" aria-label="Site">
+                <a class="page-link" href="/">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M5 12h14"></path>
+                        <path d="M12 5l7 7-7 7"></path>
+                    </svg>
+                    <span data-lang="en">Convert</span>
+                    <span data-lang="zh">转换</span>
+                </a>
+                <a class="page-link" href="/inspect" aria-current="page">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <circle cx="11" cy="11" r="6"></circle>
+                        <path d="m16 16 4 4"></path>
+                        <path d="M8.5 11h5"></path>
+                        <path d="M11 8.5v5"></path>
+                    </svg>
+                    <span data-lang="en">Inspector</span>
+                    <span data-lang="zh">诊断台</span>
+                </a>
+                <a class="page-link" href="/version">
                     <svg viewBox="0 0 24 24" aria-hidden="true">
                         <path d="M20.6 13.2 13.2 20.6a2 2 0 0 1-2.8 0L3.4 13.6a2 2 0 0 1-.6-1.4V5a2 2 0 0 1 2-2h7.2a2 2 0 0 1 1.4.6l7.2 7.2a2 2 0 0 1 0 2.8Z"></path>
                         <circle cx="7.5" cy="7.5" r="1.2"></circle>
@@ -905,13 +847,16 @@ std::string page(Request &request, Response &response) {
                     <span data-lang="zh">版本信息</span>
                 </a>)html" +
          dashboard_link + R"html(
-                <button type="button" class="lang-btn" id="lang-toggle" aria-label="Switch language">
+                <button type="button" class="lang-btn" id="lang-toggle" aria-label="切换到中文">
                     <span class="lang-toggle-text">中</span>
                 </button>
-            </div>
+            </nav>
         </div>
         <main class="container">
-        <header>
+        <p class="page-intro">
+            <span data-lang="en">Explain conversion without writing managed output.</span>
+            <span data-lang="zh">以只读方式解释转换结果，不写入托管配置。</span>
+        </p>
 
         <section class="section">
             <div class="section-title">
@@ -1548,12 +1493,31 @@ std::string page(Request &request, Response &response) {
             }
 
             document.getElementById("lang-toggle").addEventListener("click", function () {
-                document.documentElement.lang = isZh() ? "en" : "zh-CN";
+                var next = isZh() ? "en" : "zh-CN";
+                document.documentElement.lang = next;
+                try { localStorage.setItem("sce-ui-lang", next); } catch (e) {}
+                updateLanguageToggle();
                 if (lastReport) {
                     renderReport(lastReport);
                 }
                 updateResolvedUrl();
             });
+
+            function updateLanguageToggle() {
+                var toggle = document.getElementById("lang-toggle");
+                var label = toggle ? toggle.querySelector(".lang-toggle-text") : null;
+                if (!toggle || !label) return;
+                if (isZh()) {
+                    label.textContent = "EN";
+                    toggle.setAttribute("aria-label", "Switch to English");
+                    toggle.setAttribute("title", "Switch to English");
+                } else {
+                    label.textContent = "中";
+                    toggle.setAttribute("aria-label", "切换到中文");
+                    toggle.setAttribute("title", "切换到中文");
+                }
+            }
+            updateLanguageToggle();
 
             input.addEventListener("input", updateResolvedUrl);
             runButton.addEventListener("click", inspectRequest);

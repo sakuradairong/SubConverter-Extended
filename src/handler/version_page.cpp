@@ -150,7 +150,7 @@ std::string page(Request &request, Response &response) {
   std::string dashboard_link =
       global.statisticsEnabled
           ? R"html(
-                <a class="page-link" href="/dashboard" aria-label="Open dashboard">
+                <a class="page-link" href="/dashboard">
                     <svg viewBox="0 0 24 24" aria-hidden="true">
                         <path d="M4 19V5"></path>
                         <path d="M4 19h16"></path>
@@ -174,13 +174,20 @@ std::string page(Request &request, Response &response) {
     <script>
         (function () {
             function detectPreferredLanguage() {
+                var saved = null;
+                try {
+                    saved = localStorage.getItem("sce-ui-lang")
+                        || localStorage.getItem("sce-webapp-lang")
+                        || localStorage.getItem("sce-dashboard-lang");
+                } catch (e) {}
+                if (saved === "zh" || saved === "zh-CN") return "zh-CN";
+                if (saved === "en") return "en";
                 var languages = navigator.languages && navigator.languages.length
                     ? navigator.languages
                     : [navigator.language || ""];
-                var isChinese = languages.some(function (language) {
+                return languages.some(function (language) {
                     return /^zh\b/i.test(language);
-                });
-                return isChinese ? "zh-CN" : "en";
+                }) ? "zh-CN" : "en";
             }
 
             document.documentElement.lang = detectPreferredLanguage();
@@ -224,6 +231,7 @@ std::string page(Request &request, Response &response) {
             --control-hover: rgba(255, 255, 255, 0.92);
             --control-border: rgba(26, 32, 44, 0.12);
             --control-shadow: 0 12px 28px rgba(31, 38, 135, 0.12);
+            --focus-ring: #1d4ed8;
         }
 
         @media (prefers-color-scheme: dark) {
@@ -258,6 +266,7 @@ std::string page(Request &request, Response &response) {
                 --control-hover: rgba(35, 42, 56, 0.86);
                 --control-border: rgba(255, 255, 255, 0.16);
                 --control-shadow: 0 16px 34px rgba(0, 0, 0, 0.36);
+                --focus-ring: #38bdf8;
             }
         }
 
@@ -268,8 +277,16 @@ std::string page(Request &request, Response &response) {
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
+        html[lang^="zh"] body {
+            font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", "Noto Sans CJK SC", system-ui, sans-serif;
+        }
+        html[lang^="zh"] h1,
+        html[lang^="zh"] .brand-row h1 {
+            line-height: 1.35;
+        }
+
         body {
-            font-family: 'Outfit', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", sans-serif;
+            font-family: 'Outfit', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
             margin: 0;
             min-height: 100vh;
             min-height: 100svh;
@@ -319,11 +336,20 @@ std::string page(Request &request, Response &response) {
             gap: 16px;
             margin-bottom: 24px;
         }
-        .brand-row {
+        .brand-row,
+        .brand-link {
             display: flex;
             align-items: center;
             gap: 14px;
             min-width: 0;
+            color: inherit;
+            text-decoration: none;
+        }
+        .brand-link:hover {
+            color: inherit;
+        }
+        .brand-link::after {
+            display: none;
         }
         .brand-row img {
             width: 48px;
@@ -337,6 +363,7 @@ std::string page(Request &request, Response &response) {
             line-height: 1.08;
             letter-spacing: 0;
             overflow-wrap: anywhere;
+            color: var(--text-primary);
             background: none;
             -webkit-background-clip: unset;
             background-clip: unset;
@@ -377,16 +404,17 @@ std::string page(Request &request, Response &response) {
             transform: translateY(-1px);
         }
         .lang-btn:focus-visible {
-            outline: 3px solid rgba(99, 179, 237, 0.35);
+            outline: 2px solid var(--focus-ring);
             outline-offset: 2px;
         }
 
-        .page-links {
-            display: inline-flex;
-            justify-content: center;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-top: 18px;
+        .page-link[aria-current="page"] {
+            background: var(--accent-soft);
+            border-color: var(--status-border);
+        }
+
+        .page-status {
+            margin: 0 0 22px;
         }
 
         .page-link {
@@ -419,7 +447,7 @@ std::string page(Request &request, Response &response) {
         }
 
         .page-link:focus-visible {
-            outline: 3px solid rgba(99, 179, 237, 0.35);
+            outline: 2px solid var(--focus-ring);
             outline-offset: 2px;
         }
 
@@ -484,32 +512,6 @@ std::string page(Request &request, Response &response) {
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(30px); }
             to { opacity: 1; transform: translateY(0); }
-        }
-
-        header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .brand-mark {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 96px;
-            height: 96px;
-            margin: 0 auto 16px;
-            filter: var(--brand-mark-filter);
-            transition: transform 0.28s ease, filter 0.28s ease;
-        }
-
-        .brand-mark img {
-            display: block;
-            width: 100%;
-            height: 100%;
-        }
-
-        .brand-mark:hover {
-            transform: translateY(-2px) scale(1.02);
         }
 
         .status-pill {
@@ -772,30 +774,9 @@ std::string page(Request &request, Response &response) {
             }
             .topbar { flex-direction: column; align-items: flex-start; }
             .brand-row h1 { font-size: 1.4rem; }
-            header { margin-bottom: 24px; }
-            h1 {
-                font-size: 2em;
-                line-height: 1.12;
-            }
-            .title-break {
-                display: block;
-            }
-            .subtitle {
-                font-size: 0.92em;
-                line-height: 1.45;
-            }
-            .brand-mark {
-                width: 82px;
-                height: 82px;
-                margin-bottom: 14px;
-            }
             .status-pill {
                 font-size: 0.72rem;
                 margin-bottom: 12px;
-            }
-            .page-links {
-                margin-top: 16px;
-                gap: 8px;
             }
             .page-link {
                 min-height: 38px;
@@ -824,10 +805,10 @@ std::string page(Request &request, Response &response) {
 <body>
     <main class="shell">
         <div class="topbar">
-            <div class="brand-row">
+            <a class="brand-row brand-link" href="/">
                 <picture>
                     <source media="(prefers-color-scheme: dark)" srcset="/version/favicon-dark.svg">
-                    <img src="/version/favicon-light.svg" alt="SubConverter-Extended" width="48" height="48" decoding="async">
+                    <img src="/version/favicon-light.svg" alt="" width="48" height="48" decoding="async">
                 </picture>
                 <div>
                     <h1>SubConverter-Extended</h1>
@@ -836,24 +817,17 @@ std::string page(Request &request, Response &response) {
                         <span data-lang="zh">Subconverter 的现代化演进版本</span>
                     </div>
                 </div>
-            </div>
-            <div class="actions">
-            <picture class="brand-mark">
-                <source media="(prefers-color-scheme: dark)" srcset="/version/favicon-dark.svg">
-                <img src="/version/favicon-light.svg" alt="SubConverter-Extended icon" width="96" height="96" decoding="async">
-            </picture>
-            <div class="status-pill" aria-live="polite">
-                <span class="status-dot" aria-hidden="true"></span>
-                <span data-lang="en">Service Online</span>
-                <span data-lang="zh">服务在线</span>
-            </div>
-            <h1>SubConverter-<br class="title-break">Extended</h1>
-            <p class="subtitle">
-                <span data-lang="en">A Modern Evolution of Subconverter</span>
-                <span data-lang="zh">Subconverter 的现代化演进版本</span>
-            </p>
-            <nav class="page-links" aria-label="Page navigation">
-                <a class="page-link" href="/inspect" aria-label="Open inspector">
+            </a>
+            <nav class="actions" aria-label="Site">
+                <a class="page-link" href="/">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M5 12h14"></path>
+                        <path d="M12 5l7 7-7 7"></path>
+                    </svg>
+                    <span data-lang="en">Convert</span>
+                    <span data-lang="zh">转换</span>
+                </a>
+                <a class="page-link" href="/inspect">
                     <svg viewBox="0 0 24 24" aria-hidden="true">
                         <circle cx="11" cy="11" r="6"></circle>
                         <path d="m16 16 4 4"></path>
@@ -862,15 +836,27 @@ std::string page(Request &request, Response &response) {
                     </svg>
                     <span data-lang="en">Inspector</span>
                     <span data-lang="zh">诊断台</span>
+                </a>
+                <a class="page-link" href="/version" aria-current="page">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M20.6 13.2 13.2 20.6a2 2 0 0 1-2.8 0L3.4 13.6a2 2 0 0 1-.6-1.4V5a2 2 0 0 1 2-2h7.2a2 2 0 0 1 1.4.6l7.2 7.2a2 2 0 0 1 0 2.8Z"></path>
+                        <circle cx="7.5" cy="7.5" r="1.2"></circle>
+                    </svg>
+                    <span data-lang="en">Version</span>
+                    <span data-lang="zh">版本信息</span>
                 </a>)html" +
          dashboard_link + R"html(
-                <button type="button" class="lang-btn" id="lang-toggle" aria-label="Switch language">
+                <button type="button" class="lang-btn" id="lang-toggle" aria-label="切换到中文">
                     <span class="lang-toggle-text">中</span>
                 </button>
-            </div>
+            </nav>
         </div>
         <div class="container">
-            <header>
+            <div class="status-pill page-status">
+                <span class="status-dot" aria-hidden="true"></span>
+                <span data-lang="en">Service Online</span>
+                <span data-lang="zh">服务在线</span>
+            </div>
 
         <div class="info-grid">
             <div class="info-card">
@@ -944,10 +930,10 @@ std::string page(Request &request, Response &response) {
             <p class="description" data-lang="zh">由 <a href="https://github.com/Aethersailor" target="_blank" rel="noopener noreferrer">Aethersailor</a> 修改并持续演进</p>
         </div>
 
-        <div class="footer">
+        <footer class="footer">
             <span data-lang="en">Source Code: <a href="https://github.com/Aethersailor/SubConverter-Extended" target="_blank" rel="noopener noreferrer">GitHub</a> • License: <a href="https://www.gnu.org/licenses/gpl-3.0.html" target="_blank" rel="noopener noreferrer">GPL-3.0</a></span>
             <span data-lang="zh">源代码：<a href="https://github.com/Aethersailor/SubConverter-Extended" target="_blank" rel="noopener noreferrer">GitHub</a> • 许可证：<a href="https://www.gnu.org/licenses/gpl-3.0.html" target="_blank" rel="noopener noreferrer">GPL-3.0</a></span>
-        </div>
+        </footer>
     </div>
     </main>
     <script>
@@ -964,6 +950,7 @@ std::string page(Request &request, Response &response) {
 
             function setLanguage(language) {
                 document.documentElement.lang = language;
+                try { localStorage.setItem("sce-ui-lang", language); } catch (e) {}
                 updateLanguageToggle();
             }
 
