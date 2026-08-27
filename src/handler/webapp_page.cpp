@@ -445,7 +445,7 @@ std::string page(Request &, Response &response) {
     <div class="shell">
         <!-- Header -->
         <header class="topbar">
-            <a class="brand brand-link" href="/" aria-current="page">
+            <a class="brand brand-link" href="/">
                 <picture>
                     <source media="(prefers-color-scheme: dark)" srcset="/version/favicon-dark.svg">
                     <img src="/version/favicon-light.svg" alt="" width="48" height="48" decoding="async">
@@ -915,7 +915,7 @@ std::string page(Request &, Response &response) {
             }
             historyList.innerHTML = history.map(function(item, i) {
                 var preview = (item.url || '').substring(0, 60) + (item.url && item.url.length > 60 ? '...' : '');
-                return '<div class="history-item" data-index="' + i + '" role="button" tabindex="0">' +
+                return '<div class="history-item" data-index="' + i + '" tabindex="0" title="' + text('Restore', '恢复') + '">' +
                     '<span class="target-badge">' + escapeHtml(item.target || '?') + '</span>' +
                     '<span class="url-preview">' + escapeHtml(preview) + '</span>' +
                     '<span class="time">' + escapeHtml(item.time || '') + '</span>' +
@@ -1069,15 +1069,13 @@ std::string page(Request &, Response &response) {
                     }
                     return resp.text();
                 })
-                .then(function(text) {
-                    // Show result
-                    resultOutput.textContent = text;
+                .then(function(bodyText) {
+                    resultOutput.textContent = bodyText;
                     resultPanel.style.display = 'block';
                     resultPanel.scrollIntoView({ behavior: prefersReducedMotion() ? 'auto' : 'smooth', block: 'nearest' });
 
-                    // Stats
-                    var size = new Blob([text]).size;
-                    var lines = text.split('\\n').length;
+                    var size = new Blob([bodyText]).size;
+                    var lines = bodyText.split('\\n').length;
                     document.getElementById('result-size').innerHTML =
                         '<span data-lang="en">Size:</span><span data-lang="zh">大小:</span> ' + formatBytes(size);
                     document.getElementById('result-lines').innerHTML =
@@ -1107,10 +1105,10 @@ std::string page(Request &, Response &response) {
 
         // Copy button
         copyBtn.addEventListener('click', function() {
-            var text = resultOutput.textContent;
-            if (!text) return;
+            var output = resultOutput.textContent;
+            if (!output) return;
             if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(text).then(function() {
+                navigator.clipboard.writeText(output).then(function() {
                     copyBtn.classList.add('copied');
                     copyBtn.innerHTML = '<span data-lang="en">Copied!</span><span data-lang="zh">已复制!</span>';
                     setTimeout(function() {
