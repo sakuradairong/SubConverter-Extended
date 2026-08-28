@@ -83,6 +83,8 @@ def request(
         body = exc.read().decode("utf-8", errors="replace")
         hdrs = {k.lower(): v for k, v in exc.headers.items()} if exc.headers else {}
         return exc.code, body, hdrs
+    except TimeoutError as exc:
+        return 0, f"timeout: {exc}", {}
     except urllib.error.URLError as exc:
         return 0, str(exc.reason if getattr(exc, "reason", None) else exc), {}
 
@@ -111,6 +113,11 @@ def recognized(report: dict[str, Any], name: str) -> dict[str, Any]:
         if item.get("name") == name:
             return item
     return {}
+
+
+def effective_value(item: dict[str, Any]) -> str:
+    value = item.get("effective_value", item.get("effective", ""))
+    return str(value).strip().lower()
 
 
 def add_lan_cases(report: Report, base: str, timeout: int) -> None:
@@ -403,7 +410,11 @@ def add_lan_cases(report: Report, base: str, timeout: int) -> None:
         except json.JSONDecodeError:
             return False, f"HTTP {status} not JSON", body[:200]
         item = recognized(data, "list")
-        ok = status == 200 and item.get("status") == "overridden" and item.get("effective") in {"false", False, "False"}
+        ok = (
+            status == 200
+            and item.get("status") == "overridden"
+            and effective_value(item) == "false"
+        )
         return ok, f"HTTP {status} list={item}", ""
 
     report.add(
@@ -485,12 +496,13 @@ def add_lan_cases(report: Report, base: str, timeout: int) -> None:
             },
             timeout=timeout,
         )
-        has_new_fields = "proxy-groups:" in yaml_body or "Proxy Group" not in yaml_body
+        has_new_fields = "proxy-groups:" in yaml_body
         ok = (
             status == 200
             and yaml_status == 200
-            and item.get("effective") in {"true", True, "True"}
-            and "proxy-groups:" in yaml_body
+            and effective_value(item) == "true"
+            and item.get("status") == "overridden"
+            and has_new_fields
         )
         return ok, f"explain new_name={item} yaml_new_fields={has_new_fields}", ""
 
@@ -528,6 +540,9 @@ def add_public_cases(report: Report, base: str, timeout: int) -> None:
     )
 
     def loopback_config_blocked():
+        # User config is blocked locally, but /sub may then try four CDN
+        # fallback URLs as TrustedConfig (each curl timeout is 15s).
+        case_timeout = max(timeout, 75)
         started = time.monotonic()
         status, body, _ = request(
             base,
@@ -536,31 +551,40 @@ def add_public_cases(report: Report, base: str, timeout: int) -> None:
                 "target": "clash",
                 "url": SAMPLE_SS,
                 "config": LOCAL_CONFIG,
+                "explain": "true",
             },
-            timeout=timeout,
+            timeout=case_timeout,
         )
         elapsed = time.monotonic() - started
-        blocked = (
-            "blocked" in body.lower()
-            or "私有" in body
-            or "local" in body.lower()
-            or "not allowed" in body.lower()
-            or status in {400, 403}
-        )
-        did_not_hang = elapsed < timeout - 1
-        ok = did_not_hang and (blocked or status != 200 or "SmokeSS" in body)
-        # If conversion still succeeds, the loopback config was ignored (also acceptable)
-        ignored = status == 200 and "SmokeSS" in body
+        try:
+            data = json.loads(body)
+        except json.JSONDecodeError:
+            data = {}
+        ext = data.get("external_config", {})
+        did_not_hang = status != 0 and elapsed < case_timeout - 1
+        converted = status == 200 and data.get("nodes", {}).get("total", 0) >= 1
+        provided = ext.get("provided") is True
+        # Loopback must not load as the request config. A later CDN fallback
+        # (TrustedConfig) may still set loaded=true with fallback_used=true.
+        loopback_not_loaded = ext.get("loaded") is not True or ext.get(
+            "fallback_used"
+        ) is True
+        ok = did_not_hang and provided and converted and loopback_not_loaded
         return (
             ok,
-            f"HTTP {status} elapsed={elapsed:.2f}s ignored_or_blocked={blocked or ignored}",
-            body[:300],
+            (
+                f"HTTP {status} elapsed={elapsed:.2f}s "
+                f"provided={ext.get('provided')} loaded={ext.get('loaded')} "
+                f"fallback_used={ext.get('fallback_used')} "
+                f"nodes={data.get('nodes', {}).get('total')}"
+            ),
+            body[:400],
         )
 
     report.add(
         run_case(
             "public_loopback_config_not_fetched",
-            "public profile does not fetch a loopback config URL",
+            "public profile does not use a loopback config URL as the loaded config",
             loopback_config_blocked,
         )
     )
@@ -581,6 +605,15 @@ def render_markdown(report: Report, lan_url: str, public_url: str | None) -> str
     lines += [
         f"- Required cases: {sum(1 for c in report.cases if c.required)}",
         f"- Failed required cases: {len(report.failed)}",
+        "",
+        "## Runtime notes",
+        "",
+        "- Clash HTTP subscriptions are emitted as `proxy-providers` and are not downloaded by this process.",
+        "- Non-Clash targets skip HTTP subscriptions, so a Surge request with only an HTTP URL returns HTTP 400.",
+        "- `list` and `new_name` request values are overridden; explain JSON reports `effective_value`.",
+        "- Request-side `filter_script` is ignored because API mode is hardcoded on.",
+        "- Public profile rejects `upload=true` with HTTP 403.",
+        "- Public profile blocks loopback/private `config` hosts before curl. If that user config fails, `/sub` still tries hardcoded CDN fallback URLs as `TrustedConfig` (those fetches are not public-host-restricted). This fixture sets `max_allowed_rulesets = 8`, so a downloaded Custom_Clash.ini is then rejected for size.",
         "",
         "| Case | Result | ms | Observed |",
         "| --- | --- | --- | --- |",

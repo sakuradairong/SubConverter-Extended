@@ -44,7 +44,7 @@ wait_ready() {
       cat "$log" >&2 || true
       return 1
     fi
-    if curl -fsS "$url/healthz" >/dev/null 2>&1; then
+    if curl -fsS --max-time 1 "$url/healthz" >/dev/null 2>&1; then
       return 0
     fi
     sleep 0.25
@@ -57,23 +57,44 @@ wait_ready() {
 LAN_DIR="$(prepare_runtime lan "$ROOT/tests/dynamic/pref-lan.toml")"
 PUBLIC_DIR="$(prepare_runtime public "$ROOT/tests/dynamic/pref-public.toml")"
 
+stop_pid() {
+  local pid="${1:-}"
+  if [[ -z "$pid" ]]; then
+    return 0
+  fi
+  if ! kill -0 "$pid" >/dev/null 2>&1; then
+    wait "$pid" >/dev/null 2>&1 || true
+    return 0
+  fi
+  kill "$pid" >/dev/null 2>&1 || true
+  for _ in $(seq 1 20); do
+    if ! kill -0 "$pid" >/dev/null 2>&1; then
+      wait "$pid" >/dev/null 2>&1 || true
+      return 0
+    fi
+    sleep 0.1
+  done
+  kill -9 "$pid" >/dev/null 2>&1 || true
+  wait "$pid" >/dev/null 2>&1 || true
+}
+
 cleanup() {
-  if [[ -n "${LAN_PID:-}" ]]; then kill "$LAN_PID" >/dev/null 2>&1 || true; fi
-  if [[ -n "${PUBLIC_PID:-}" ]]; then kill "$PUBLIC_PID" >/dev/null 2>&1 || true; fi
+  stop_pid "${LAN_PID:-}"
+  stop_pid "${PUBLIC_PID:-}"
 }
 trap cleanup EXIT
 
 echo "==> starting LAN instance on 127.0.0.1:${LAN_PORT}"
 (
   cd "$LAN_DIR"
-  "$BIN" -f "$LAN_DIR/pref.toml"
+  exec "$BIN" -f "$LAN_DIR/pref.toml"
 ) >"$LAN_DIR/server.log" 2>&1 &
 LAN_PID=$!
 
 echo "==> starting public instance on 127.0.0.1:${PUBLIC_PORT}"
 (
   cd "$PUBLIC_DIR"
-  "$BIN" -f "$PUBLIC_DIR/pref.toml"
+  exec "$BIN" -f "$PUBLIC_DIR/pref.toml"
 ) >"$PUBLIC_DIR/server.log" 2>&1 &
 PUBLIC_PID=$!
 
