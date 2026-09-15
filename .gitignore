@@ -9,10 +9,13 @@ scripts/yaml-cpp
 src/.DS_Store
 
 build
+.deps
 bridge/libmihomo.a
 bridge/libmihomo.so
 bridge/libmihomo.dll
 bridge/libmihomo.dll.a
+
+tests/dynamic/last-run.json
 
 __pycache__/
 *.pyc

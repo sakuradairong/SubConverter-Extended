@@ -1,0 +1,88 @@
+# Same as pref-lan.toml with the public security profile and a distinct port.
+
+version = 1
+
+[common]
+default_url = []
+enable_insert = false
+insert_url = [""]
+prepend_insert_url = true
+exclude_remarks = []
+enable_filter = false
+default_external_config = "empty.ini"
+base_path = "base"
+clash_rule_base = "base/all_base.tpl"
+surge_rule_base = "base/all_base.tpl"
+surfboard_rule_base = "base/all_base.tpl"
+mellow_rule_base = "base/all_base.tpl"
+quan_rule_base = "base/all_base.tpl"
+quanx_rule_base = "base/all_base.tpl"
+loon_rule_base = "base/all_base.tpl"
+sssub_rule_base = "base/all_base.tpl"
+singbox_rule_base = "base/all_base.tpl"
+proxy_config = "NONE"
+proxy_ruleset = "NONE"
+proxy_subscription = "NONE"
+append_proxy_type = false
+reload_conf_on_request = false
+
+[node_pref]
+sort_flag = false
+filter_deprecated_nodes = false
+append_sub_userinfo = true
+clash_use_new_field_name = true
+clash_proxies_style = "flow"
+clash_proxy_groups_style = "flow"
+
+[managed_config]
+write_managed_config = true
+managed_config_prefix = "http://127.0.0.1:25501"
+config_update_interval = 86400
+config_update_strict = false
+
+[surge_external_proxy]
+surge_ssr_path = ""
+resolve_hostname = true
+
+[security]
+profile = "public"
+allow_public_upload = false
+
+[statistics]
+enabled = false
+data_dir = "stats"
+flush_interval = 5
+
+[emojis]
+add_emoji = false
+remove_old_emoji = false
+
+[ruleset]
+enabled = false
+overwrite_original_rules = false
+update_ruleset_on_request = false
+
+[template]
+template_path = ""
+globals = []
+
+[server]
+listen = "127.0.0.1"
+port = 25501
+serve_file_root = ""
+
+[advanced]
+log_level = "info"
+print_debug_info = false
+max_pending_connections = 64
+max_concurrent_threads = 4
+max_server_threads = 8
+max_allowed_rulesets = 8
+max_allowed_rules = 0
+max_allowed_download_size = 1048576
+enable_cache = false
+script_clean_context = true
+async_fetch_ruleset = false
+skip_failed_links = true
+enable_request_coalescing = false
+response_cache_ttl = 0
